@@ -93,4 +93,4 @@ Once everything is connected, open the Blynk app and monitor the data. You can a
 - If you don't see data on the Blynk app, check the Blynk Auth Token and ensure your device is correctly linked.
 
 ## License
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
