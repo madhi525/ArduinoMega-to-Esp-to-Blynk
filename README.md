@@ -1,5 +1,4 @@
 # ArduinoMega-to-Esp-to-Blynk
-# ESP8266 Mega Blynk Project
 
 This project connects an **ESP8266** and **Arduino Mega** to monitor and control sensors via **Blynk**. It uses a **DHT sensor** for humidity and temperature readings, a **Turbidity sensor** for water quality monitoring, a **pH sensor** for measuring pH levels, and a **DS18B20 temperature sensor** for temperature readings. The data is sent to the Blynk app for remote monitoring, and the system operates via WiFi.
 
