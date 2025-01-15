@@ -33,6 +33,13 @@ void setup() {
   delay(1000);
 }
 
+float kalibrasipH(float voltase){
+  float gradien = (7.0 - 4.0) / (2.5 - 3.2);
+  float offset = 0.7 - gradien * 2.5;
+
+  return gradien * voltase + offset;
+}
+
 void cekTombolDitekan(){
   if(Serial2.available() > 0){
     String dataDiterima = Serial2.readStringUntil('\n');
@@ -83,9 +90,10 @@ void loop() {
   servoMotor.write(0);
   cekTombolDitekan();
   
-  int pHValue = analogRead(PH_PIN);
+  int analogValuepH = analogRead(PH_PIN);
+  float voltase = (analogValuepH * 5.0) / 1024.0;
+  float pH = kalibrasipH(voltase);
   int turbidityValue = analogRead(TURBIDITY_PIN);
-  float pH = map(pHValue, 0, 1023, 0, 14);  // Konversi nilai pH menjadi nilai pH yang lebih logis (penyesuaian skala)
 
   // Baca suhu dari sensor DS18B20
   sensors.requestTemperatures();
