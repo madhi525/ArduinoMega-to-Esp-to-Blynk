@@ -7,6 +7,7 @@
 #include <WiFiUdp.h>
 #include <NTPClient.h>
 #include <ArduinoJson.h>
+#include <ESP8266HTTPClient.h>
 
 char ssid[] = "SSID_wifi"; // Ganti dengan SSID Wi-Fi Anda
 char pass[] = "pass_wifi"; // Ganti dengan password Wi-Fi Anda
@@ -51,6 +52,45 @@ BLYNK_WRITE(V5) {
     StaticJsonDocument<128> doc;
     doc["tombol"] = state;
     serializeJson(doc, espToMega);
+  }
+}
+
+String sendDataToFlutter(String waktu, float pH, int turbidity, float suhu_DS18B20) {
+  if (WiFi.status() == WL_CONNECTED) {
+    HTTPClient http;
+    http.begin("http://<flutter_server_url>/data"); // Ganti dengan URL server Anda
+    http.addHeader("Content-Type", "application/json");
+
+    StaticJsonDocument<200> doc;
+    doc["waktu"] = waktu;
+    doc["pH"] = pH;
+    doc["turbidity"] = turbidity;
+    doc["suhu"] = suhu_DS18B20;
+
+    String jsonData;
+    serializeJson(doc, jsonData);
+
+    int httpResponseCode = http.POST(jsonData);
+    if (httpResponseCode > 0) {
+      Serial.print("Response: ");
+      Serial.println(httpResponseCode);
+
+      if (httpResponseCode == 200) {
+        http.end();
+        return "sukses terkirim";
+      } else {
+        http.end();
+        return "error sending data";
+      }
+    } else {
+      Serial.print("Error sending data: ");
+      Serial.println(httpResponseCode);
+      http.end();
+      return "error sending data";
+    }
+  } else {
+    Serial.println("WiFi not connected");
+    return "wifi not connected";
   }
 }
 
@@ -99,23 +139,32 @@ void loop() {
 
       if (!error) {
         // Ambil data dari JSON
-        String pH = doc["pH"];
-        String turbidity = doc["turbidity"];
-        String suhu_DS18B20 = doc["suhu_DS18B20"];
+        String stringpH = doc["pH"];
+        String stringTurbidity = doc["turbidity"];
+        String stringSuhu_DS18B20 = doc["suhu_DS18B20"];
+
+        // Sterilisasi Data yang di terima
+        float pH = stringpH.toFloat();
+        int turbidity = stringTurbidity.toInt();
+        float suhu_DS18B20 = stringSuhu_DS18B20.toFloat();
 
         // Kirim data ke Blynk
-        Blynk.virtualWrite(V0, pH.toFloat());   
-        Blynk.virtualWrite(V1, turbidity.toInt());   
-        Blynk.virtualWrite(V2, suhu_DS18B20.toFloat()); 
+        Blynk.virtualWrite(V0, pH);   
+        Blynk.virtualWrite(V1, turbidity);   
+        Blynk.virtualWrite(V2, suhu_DS18B20); 
         Blynk.virtualWrite(V3, waktuToBlynk);            
+
+        // Kirim data ke Flutter
+        String statusData = sendDataToFlutter(waktuToBlynk, pH, turbidity, suhu_DS18B20);
+        Serial.println("Status data yang di kirim ke flutter: " + statusData);
 
         // Debugging: tampilkan data di serial monitor
         Serial.print("pH: ");
-        Serial.println(pH);
+        Serial.println(stringpH);
         Serial.print("Turbidity: ");
-        Serial.println(turbidity);
+        Serial.println(stringTurbidity);
         Serial.print("Suhu DS18B20: ");
-        Serial.println(suhu_DS18B20);
+        Serial.println(stringSuhu_DS18B20);
         Serial.print("Waktu: ");
         Serial.println(waktuToBlynk);
       }
